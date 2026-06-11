@@ -1,13 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "./supabase.js";
 
 // Lottie JSON URL (LottieFiles Simple License — 상업적 이용 가능)
-const LOTTIE_URLS = {
-  default:     "https://assets9.lottiefiles.com/packages/lf20_ysas4vcp.json",
-  pigeon:      "https://assets4.lottiefiles.com/packages/lf20_q5pk6p1k.json",
-  foam_roller: "https://assets3.lottiefiles.com/packages/lf20_obhph3sh.json",
-  shoulder:    "https://assets4.lottiefiles.com/packages/lf20_q5pk6p1k.json",
-  calf:        "https://assets3.lottiefiles.com/packages/lf20_obhph3sh.json",
-};
 
 // ── 데이터 ──────────────────────────────────────
 const SYMPTOMS = [
@@ -57,139 +51,139 @@ const PAIN_TYPE = [
 
 const STRETCH_DATA = {
   "폼롤러 IT밴드 롤링": {
-    duration: "60초", sets: "좌우 각 1세트", lottie: "foam_roller",
+    duration: "60초", sets: "좌우 각 1세트", unsplash: "foam roller exercise stretching",
     youtube: "IT밴드 폼롤러 롤링 방법",
     steps: ["옆으로 누워 폼롤러를 무릎 위 허벅지 옆에 댄다", "반대쪽 발을 바닥에 짚어 체중을 조절", "천천히 골반까지 위아래로 굴린다 (압통점 10초 멈춤)"],
     caution: ["무릎 관절 위에 직접 올리지 말 것", "통증이 심하면 체중을 줄여서 시작"],
   },
   "비둘기 자세 (고관절 외회전 스트레칭)": {
-    duration: "30~45초", sets: "좌우 각 3세트", lottie: "pigeon",
+    duration: "30~45초", sets: "좌우 각 3세트", unsplash: "pigeon pose yoga stretch",
     youtube: "비둘기 자세 고관절 스트레칭",
     steps: ["한쪽 다리를 앞으로 접어 바닥에 놓는다", "뒷다리는 뒤로 길게 뻗는다", "상체를 천천히 앞으로 숙여 고관절 바깥이 당기는 느낌 유지"],
     caution: ["무릎 통증 시 발목을 몸 쪽으로 당길 것", "골반이 한쪽으로 기울지 않도록"],
   },
   "서서 IT밴드 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "stretching exercise yoga pose",
     youtube: "IT밴드 서서 스트레칭",
     steps: ["한쪽 발을 반대쪽 발 뒤로 교차시켜 선다", "같은 쪽 팔을 머리 위로 올리며 반대 방향으로 몸을 기울인다", "허벅지 바깥쪽이 당기는 느낌 유지"],
     caution: ["균형 잡기 어려우면 벽에 손 짚고 할 것"],
   },
   "사이드 라잉 힙 어브덕션": {
-    duration: "15회", sets: "3세트", lottie: "default",
+    duration: "15회", sets: "3세트", unsplash: "stretching exercise yoga pose",
     youtube: "사이드 라잉 힙 어브덕션 중둔근",
     steps: ["옆으로 눕고 아래쪽 무릎을 살짝 구부린다", "위쪽 다리를 일직선으로 유지하며 45도 올린다", "1초 멈췄다가 천천히 내린다 — 골반이 흔들리지 않도록"],
     caution: ["다리를 너무 높이 올리면 허리 부담", "발끝이 정면을 향하게"],
   },
   "클램쉘": {
-    duration: "20회", sets: "3세트", lottie: "default",
+    duration: "20회", sets: "3세트", unsplash: "stretching exercise yoga pose",
     youtube: "클램쉘 운동 중둔근",
     steps: ["옆으로 눕고 무릎을 90도로 구부린다 (발뒤꿈치 붙임)", "발뒤꿈치를 붙인 채 위쪽 무릎만 위로 벌린다", "골반이 뒤로 넘어가지 않도록 복부에 힘"],
     caution: ["골반이 굴러가면 동작 범위 줄일 것"],
   },
   "밴드 워킹": {
-    duration: "10보 왕복", sets: "3세트", lottie: "default",
+    duration: "10보 왕복", sets: "3세트", unsplash: "stretching exercise yoga pose",
     youtube: "밴드 사이드 워킹 중둔근",
     steps: ["밴드를 발목 위에 걸고 어깨너비보다 약간 넓게 선다", "무릎을 살짝 구부리고 옆으로 한 발씩 이동", "발을 너무 모으지 말고 밴드 장력 유지"],
     caution: ["상체가 흔들리지 않도록"],
   },
   "비둘기 자세": {
-    duration: "45초", sets: "좌우 각 3세트", lottie: "pigeon",
+    duration: "45초", sets: "좌우 각 3세트", unsplash: "pigeon pose yoga stretch",
     youtube: "비둘기 자세 이상근 스트레칭",
     steps: ["한쪽 다리를 앞으로 접어 바닥에 놓는다", "뒷다리는 뒤로 길게 뻗는다", "상체를 천천히 앞으로 숙여 엉덩이 깊숙이 당기는 느낌 유지"],
     caution: ["무릎 통증 시 발목 위치 조정", "골반 수평 유지"],
   },
   "누워서 figure-4 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "stretching exercise yoga pose",
     youtube: "figure4 이상근 스트레칭",
     steps: ["등을 대고 누워 양 무릎을 세운다", "한쪽 발목을 반대쪽 허벅지 위에 올린다 (숫자 4 모양)", "두 손으로 아래쪽 허벅지를 감싸 가슴 쪽으로 당긴다"],
     caution: ["허리가 바닥에서 뜨지 않도록", "찌릿하면 강도 줄이기"],
   },
   "앉아서 이상근 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "stretching exercise yoga pose",
     youtube: "앉아서 이상근 스트레칭",
     steps: ["의자에 앉아 한쪽 발목을 반대쪽 무릎 위에 올린다", "등을 펴고 상체를 천천히 앞으로 숙인다", "엉덩이 깊숙이 당기는 느낌이 나면 유지"],
     caution: ["허리를 구부리지 말고 엉덩이에서 접을 것"],
   },
   "누워서 무릎 가슴 당기기": {
-    duration: "30초", sets: "좌우 각 3세트 + 양쪽 1세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트 + 양쪽 1세트", unsplash: "stretching exercise yoga pose",
     youtube: "무릎 가슴 당기기 허리 스트레칭",
     steps: ["등을 대고 누워 한쪽 무릎을 두 손으로 감싼다", "무릎을 가슴 쪽으로 천천히 당긴다", "반대쪽 다리는 바닥에 편하게 뻗는다"],
     caution: ["허리 통증이 심해지면 즉시 중단", "호흡하며 천천히"],
   },
   "골반 교정 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "stretching exercise yoga pose",
     youtube: "골반 교정 스트레칭 천장관절",
     steps: ["등을 대고 누워 한쪽 무릎을 반대편 바닥으로 내린다", "양 어깨는 바닥에서 떨어지지 않도록", "허리~골반 옆이 당기는 느낌을 30초 유지"],
     caution: ["어깨가 들리면 범위 제한", "날카로운 통증 시 중단"],
   },
   "캣카우": {
-    duration: "10회 호흡", sets: "3세트", lottie: "default",
+    duration: "10회 호흡", sets: "3세트", unsplash: "stretching exercise yoga pose",
     youtube: "캣카우 척추 스트레칭",
     steps: ["네 발 자세 — 손목 어깨 아래, 무릎 골반 아래", "숨 들이쉬며 허리를 아래로 낮추고 고개를 든다 (카우)", "숨 내쉬며 등을 둥글게 말고 고개를 떨군다 (캣)"],
     caution: ["목을 과도하게 젖히지 말 것"],
   },
   "맥켄지 신전 운동 (가볍게)": {
-    duration: "10회", sets: "2~3세트", lottie: "default",
+    duration: "10회", sets: "2~3세트", unsplash: "stretching exercise yoga pose",
     youtube: "맥켄지 신전 운동 허리",
     steps: ["엎드려 눕는다", "팔꿈치로 상체를 천천히 들어올린다 (스핑크스 자세)", "통증 없는 범위까지만"],
     caution: ["다리 저림 심해지면 즉시 중단 후 병원", "척추관 협착증이면 금지"],
   },
   "대퇴사두근 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "stretching exercise yoga pose",
     youtube: "대퇴사두근 스트레칭",
     steps: ["한쪽 발을 뒤로 잡아 발뒤꿈치를 엉덩이 쪽으로 당긴다", "균형 어려우면 벽에 손 짚기", "허벅지 앞쪽이 당기는 느낌 유지"],
     caution: ["무릎을 억지로 꺾지 말 것"],
   },
   "햄스트링 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "stretching exercise yoga pose",
     youtube: "햄스트링 스트레칭",
     steps: ["한쪽 발을 앞에 두고 발끝을 올린다", "등을 펴고 엉덩이부터 앞으로 숙인다", "허벅지 뒤쪽이 당기는 느낌 유지"],
     caution: ["허리를 구부리면 허리 부상 위험"],
   },
   "폼롤러 대퇴 롤링": {
-    duration: "60초", sets: "좌우 각 1세트", lottie: "foam_roller",
+    duration: "60초", sets: "좌우 각 1세트", unsplash: "foam roller exercise stretching",
     youtube: "폼롤러 허벅지 앞 롤링",
     steps: ["엎드려 허벅지 아래에 폼롤러를 댄다", "팔로 상체를 지지하며 천천히 위아래로 굴린다", "압통점에서 10초 멈추고 심호흡"],
     caution: ["무릎 관절 위에 직접 올리지 말 것"],
   },
   "목 옆면 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "shoulder",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "shoulder neck stretching",
     youtube: "목 옆면 사각근 스트레칭",
     steps: ["등을 펴고 앉아 한 손을 귀 위에 살짝 올린다", "천천히 반대편으로 목을 기울인다 (당기지 말고 무게만)", "목 옆면이 당기는 느낌을 30초 유지"],
     caution: ["절대 힘으로 당기지 말 것", "저림 오면 즉시 중단"],
   },
   "어깨 후면 스트레칭 (cross-body)": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "shoulder",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "shoulder neck stretching",
     youtube: "어깨 후면 크로스바디 스트레칭",
     steps: ["한쪽 팔을 가슴 앞으로 수평으로 뻗는다", "반대팔 팔꿈치로 그 팔을 몸 쪽으로 지그시 누른다", "어깨 뒤쪽이 당기는 느낌 유지"],
     caution: ["어깨를 으쓱하지 말고 내린 상태 유지"],
   },
   "흉추 가동성 운동 (폼롤러)": {
-    duration: "10회", sets: "3세트", lottie: "foam_roller",
+    duration: "10회", sets: "3세트", unsplash: "foam roller exercise stretching",
     youtube: "흉추 가동성 폼롤러",
     steps: ["폼롤러를 등 중간(견갑골 사이)에 가로로 댄다", "팔짱을 끼고 천천히 뒤로 누워 등이 펴지도록", "폼롤러 위치를 조금씩 위아래로 바꿔가며 반복"],
     caution: ["허리에 직접 대지 말 것", "목을 뒤로 꺾지 말기"],
   },
   "종아리 스트레칭 (벽 대고)": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "calf",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "calf stretching exercise",
     youtube: "종아리 스트레칭 벽 대고",
     steps: ["벽에 손을 짚고 한 발을 뒤로 뻗는다", "뒷발 발뒤꿈치를 바닥에 누르며 무릎을 편다", "종아리 전체가 당기는 느낌을 30초 유지"],
     caution: ["발뒤꿈치가 뜨면 보폭을 줄일 것"],
   },
   "가자미근 스트레칭 (무릎 굽혀)": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "calf",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "calf stretching exercise",
     youtube: "가자미근 스트레칭 아킬레스",
     steps: ["벽에 손을 짚고 한 발을 뒤로 반 보 뻗는다", "뒷발 무릎을 살짝 구부린 채 발뒤꿈치를 눌러 내린다", "발목 뒤쪽 깊숙이 당기는 느낌 유지"],
     caution: ["아킬레스 날카로운 통증 시 즉시 중단", "부종 있으면 병원 먼저"],
   },
   "정강이 스트레칭": {
-    duration: "20초", sets: "좌우 각 3세트", lottie: "calf",
+    duration: "20초", sets: "좌우 각 3세트", unsplash: "calf stretching exercise",
     youtube: "정강이 전경골근 스트레칭",
     steps: ["서서 한쪽 발등을 바닥에 대고 발끝이 뒤를 향하게 한다", "무릎을 살짝 구부리며 체중을 앞으로 옮긴다", "정강이 앞쪽이 당기는 느낌 유지"],
     caution: ["발목을 비틀지 말 것", "피로골절 의심 시 절대 금지"],
   },
   "런지 자세 장요근 스트레칭": {
-    duration: "30초", sets: "좌우 각 3세트", lottie: "default",
+    duration: "30초", sets: "좌우 각 3세트", unsplash: "stretching exercise yoga pose",
     youtube: "장요근 런지 스트레칭",
     steps: ["한쪽 무릎을 바닥에 대고 런지 자세를 취한다", "골반을 앞으로 밀며 고관절 앞쪽이 당기도록", "상체는 세우고 허리를 과하게 젖히지 않는다"],
     caution: ["무릎이 발끝을 넘어가지 않도록"],
@@ -276,48 +270,30 @@ function analyze(s,t,p,pain) {
 }
 
 // ── Lottie 컴포넌트 (lottie-web CDN 직접 로드) ──
-function LottieAnim({ src }) {
-  const containerRef = useRef(null);
-  const animRef = useRef(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    function loadLottie() {
-      if (window.lottie) {
-        if (animRef.current) animRef.current.destroy();
-        if (!containerRef.current || cancelled) return;
-        animRef.current = window.lottie.loadAnimation({
-          container: containerRef.current,
-          renderer: "svg",
-          loop: true,
-          autoplay: true,
-          path: src,
-        });
-        animRef.current.setSpeed(0.6);
-      } else {
-        const script = document.createElement("script");
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js";
-        script.onload = () => { if (!cancelled) loadLottie(); };
-        document.head.appendChild(script);
-      }
-    }
-
-    loadLottie();
-    return () => {
-      cancelled = true;
-      if (animRef.current) { animRef.current.destroy(); animRef.current = null; }
-    };
-  }, [src]);
-
+function StretchImage({ query }) {
+  const [loaded, setLoaded] = useState(false);
+  const [err, setErr] = useState(false);
   return (
-    <div style={{ background: "#111", borderRadius: "12px", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "center", height: 150 }}>
-      <div ref={containerRef} style={{ width: 150, height: 150 }} />
+    <div style={{ position:"relative", borderRadius:"12px", overflow:"hidden", height:170, background:"#111", marginTop:12, marginBottom:12 }}>
+      {!loaded && !err && (
+        <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:24, height:24, border:"2px solid #00C896", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+      )}
+      {err ? (
+        <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+          <span style={{ fontSize:28 }}>🧘</span>
+        </div>
+      ) : (
+        <img src={`https://source.unsplash.com/featured/600x300/?${encodeURIComponent(query)}`}
+          alt={query} onLoad={()=>setLoaded(true)} onError={()=>setErr(true)}
+          style={{ width:"100%", height:"100%", objectFit:"cover", opacity:loaded?1:0, transition:"opacity 0.3s" }} />
+      )}
     </div>
   );
 }
 
-// ── UI 컴포넌트 ──
 function MultiSelect({ options, selected, onChange, color = "#00C896" }) {
   const toggle = id => onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
   return (
@@ -396,7 +372,7 @@ function StretchCard({ name }) {
       {open && d && (
         <div style={{ padding: "0 14px 14px", borderTop: "1px solid #181818" }}>
           <div style={{ marginTop: "12px", marginBottom: "12px" }}>
-            <LottieAnim src={LOTTIE_URLS[d.lottie]} />
+            <StretchImage query={d.unsplash} />
           </div>
           <p style={{ fontSize: "10px", color: "#7B8FFF", fontWeight: 700, marginBottom: "8px", letterSpacing: "0.5px" }}>동작 순서</p>
           {d.steps.map((step, i) => (
@@ -411,11 +387,17 @@ function StretchCard({ name }) {
               {d.caution.map((c, i) => <p key={i} style={{ fontSize: "11px", color: "#FF9060", margin: "2px 0" }}>· {c}</p>)}
             </div>
           )}
-          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(d.youtube)}`} target="_blank" rel="noopener noreferrer"
-            style={{ display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px", background: "#FF000015", border: "1px solid #FF000030", borderRadius: "8px", textDecoration: "none" }}>
-            <span style={{ fontSize: "13px" }}>▶</span>
-            <span style={{ fontSize: "12px", color: "#FF6060", fontWeight: 600 }}>유튜브에서 동작 확인하기</span>
-          </a>
+          <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(d.youtube)}`} target="_blank" rel="noopener noreferrer" style={{ display:"block", textDecoration:"none" }}>
+                <div style={{ background:"linear-gradient(135deg,#FF0000,#CC0000)", borderRadius:"10px", padding:"12px 15px", display:"flex", alignItems:"center", gap:"11px" }}>
+                  <div style={{ width:32, height:32, borderRadius:"8px", background:"rgba(255,255,255,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <span style={{ fontSize:14 }}>▶</span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:2 }}>유튜브에서 전체 동작 보기</div>
+                    <div style={{ fontSize:11, color:"rgba(255,255,255,0.7)" }}>{d.youtube}</div>
+                  </div>
+                </div>
+              </a>
         </div>
       )}
     </div>
@@ -432,6 +414,27 @@ export default function PainTriage() {
   const [result, setResult] = useState(null);
   const [openCause, setOpenCause] = useState(null);
   const [side, setSide] = useState(null);
+  const [user, setUser] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginTab, setLoginTab] = useState("login");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [showTracker, setShowTracker] = useState(false);
+  const [trackerHabits, setTrackerHabits] = useState([]);
+  const [trackerSide, setTrackerSide] = useState(null);
+  const [trackerNote, setTrackerNote] = useState("");
+  const [trackerSaved, setTrackerSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState("check");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
+    return () => subscription.unsubscribe();
+  }, []);
 
   const goNext = () => { if (step === 3) setResult(analyze(symptoms, triggers, posture, painType)); setStep(s => s + 1); };
   const canNext = () => { if (step === 0) return symptoms.length > 0; if (step === 1) return triggers.length > 0; if (step === 2) return true; if (step === 3) return painType.length > 0; return false; };
@@ -446,10 +449,28 @@ export default function PainTriage() {
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
           <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "linear-gradient(135deg,#00C896,#0099CC)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>⚡</div>
           <span style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.5px" }}>PainCheck</span>
-          <span style={{ fontSize: "10px", color: "#2a2a2a", marginLeft: "auto" }}>Beta v2</span>
+          <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:"8px" }}>
+            {user ? (
+              <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                <span style={{ fontSize:"11px", color:"#00C896", maxWidth:"120px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user.email}</span>
+              <button onClick={() => setShowTracker(true)} style={{ fontSize:"11px", color:"#7B8FFF", background:"none", border:"1px solid #7B8FFF44", borderRadius:"6px", padding:"4px 10px", cursor:"pointer" }}>자세 추적기</button>
+                <button onClick={() => supabase.auth.signOut()} style={{ fontSize:"11px", color:"#555", background:"none", border:"1px solid #2a2a2a", borderRadius:"6px", padding:"3px 8px", cursor:"pointer" }}>로그아웃</button>
+              </div>
+            ) : (
+              <button onClick={() => { setShowLogin(true); setLoginError(""); }} style={{ fontSize:"11px", color:"#00C896", background:"none", border:"1px solid #00C89644", borderRadius:"6px", padding:"4px 10px", cursor:"pointer" }}>로그인</button>
+            )}
+          </div>
         </div>
-        <p style={{ fontSize: "11px", color: "#383838", marginBottom: "22px" }}>증상 입력 → 원인 추정 → 스트레칭 가이드 · 의료 진단 대체 아님</p>
-        {step < 4 && <StepBar current={step} labels={STEP_LABELS} />}
+        <p style={{ fontSize: "11px", color: "#383838", marginBottom: "16px" }}>증상 입력 → 원인 추정 → 스트레칭 가이드 · 의료 진단 대체 아님</p>
+        <div style={{ display:"flex", gap:"8px", marginBottom:"24px" }}>
+          <button onClick={() => setActiveTab("check")} style={{ flex:1, padding:"10px", borderRadius:"10px", border:`2px solid ${activeTab==="check"?"#00C896":"#2a2a2a"}`, background:activeTab==="check"?"#00C89618":"#111", color:activeTab==="check"?"#00C896":"#555", fontSize:"13px", fontWeight:activeTab==="check"?700:400, cursor:"pointer" }}>
+            ⚡ 증상 체크
+          </button>
+          <button onClick={() => { if(!user){setShowLogin(true);return;} setActiveTab("tracker"); }} style={{ flex:1, padding:"10px", borderRadius:"10px", border:`2px solid ${activeTab==="tracker"?"#7B8FFF":"#2a2a2a"}`, background:activeTab==="tracker"?"#7B8FFF18":"#111", color:activeTab==="tracker"?"#7B8FFF":"#555", fontSize:"13px", fontWeight:activeTab==="tracker"?700:400, cursor:"pointer" }}>
+            📐 자세 추적기
+          </button>
+        </div>
+        {activeTab==="check" && step < 4 && <StepBar current={step} labels={STEP_LABELS} />}
       </div>
 
       <div style={{ width: "100%", maxWidth: "640px", padding: "0 20px 80px" }}>
@@ -497,7 +518,12 @@ export default function PainTriage() {
         {step === 4 && result && (
           <div>
             <h2 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>분석 결과</h2>
-            <p style={{ fontSize: "11px", color: "#383838", marginBottom: "20px" }}>가능성 높은 순 · 확진 아님</p>
+            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"20px" }}>
+              <p style={{ fontSize:"11px", color:"#383838", margin:0 }}>가능성 높은 순 · 확진 아님</p>
+              {saving && <span style={{ fontSize:"11px", color:"#555" }}>저장 중...</span>}
+              {saved && <span style={{ fontSize:"11px", color:"#00C896" }}>✓ 저장됨</span>}
+              {!user && <span style={{ fontSize:"11px", color:"#444" }}>로그인하면 기록이 저장돼요</span>}
+            </div>
 
             {result.flags.length > 0 && (
               <div style={{ background: "#FF3B3010", border: "1px solid #FF3B3040", borderRadius: "12px", padding: "12px 15px", marginBottom: "16px" }}>
@@ -577,6 +603,109 @@ export default function PainTriage() {
           </div>
         )}
       </div>
+      {showLogin && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000 }}
+          onClick={e => { if(e.target===e.currentTarget) setShowLogin(false); }}>
+          <div style={{ background:"#141414", border:"1px solid #2a2a2a", borderRadius:"16px", padding:"28px 24px", width:"100%", maxWidth:"360px", margin:"0 20px" }}>
+            <div style={{ display:"flex", gap:0, marginBottom:"20px", background:"#0a0a0a", borderRadius:"10px", padding:"4px" }}>
+              {["login","signup"].map(tab => (
+                <button key={tab} onClick={() => { setLoginTab(tab); setLoginError(""); }}
+                  style={{ flex:1, padding:"8px", borderRadius:"8px", border:"none", background:loginTab===tab?"#1e1e1e":"none", color:loginTab===tab?"#e8e8e8":"#555", fontSize:"13px", fontWeight:loginTab===tab?600:400, cursor:"pointer" }}>
+                  {tab==="login"?"로그인":"회원가입"}
+                </button>
+              ))}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
+              <input type="email" placeholder="이메일" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)}
+                style={{ padding:"12px 14px", background:"#0a0a0a", border:"1px solid #2a2a2a", borderRadius:"10px", color:"#e8e8e8", fontSize:"14px", outline:"none" }} />
+              <input type="password" placeholder="비밀번호" value={loginPassword} onChange={e=>setLoginPassword(e.target.value)}
+                style={{ padding:"12px 14px", background:"#0a0a0a", border:"1px solid #2a2a2a", borderRadius:"10px", color:"#e8e8e8", fontSize:"14px", outline:"none" }} />
+              {loginError && <p style={{ fontSize:"12px", color:"#FF6B6B", margin:0 }}>{loginError}</p>}
+              <button onClick={async () => {
+                setLoginLoading(true); setLoginError("");
+                if (loginTab==="login") {
+                  const { error } = await supabase.auth.signInWithPassword({ email:loginEmail, password:loginPassword });
+                  if (error) setLoginError("이메일 또는 비밀번호가 틀렸어요");
+                  else setShowLogin(false);
+                } else {
+                  const { error } = await supabase.auth.signUp({ email:loginEmail, password:loginPassword });
+                  if (error) setLoginError(error.message);
+                  else { setShowLogin(false); alert("가입 완료! 이메일 인증 후 로그인하세요."); }
+                }
+                setLoginLoading(false);
+              }} style={{ padding:"13px", background:"linear-gradient(135deg,#00C896,#0099CC)", border:"none", borderRadius:"10px", color:"#0a0a0a", fontSize:"14px", fontWeight:700, cursor:loginLoading?"not-allowed":"pointer" }}>
+                {loginLoading ? "처리 중..." : loginTab==="login" ? "로그인" : "회원가입"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTracker && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, overflowY:"auto" }}
+          onClick={e => { if(e.target===e.currentTarget) setShowTracker(false); }}>
+          <div style={{ background:"#141414", border:"1px solid #2a2a2a", borderRadius:"16px", padding:"28px 24px", width:"100%", maxWidth:"480px", margin:"20px", maxHeight:"90vh", overflowY:"auto" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"20px" }}>
+              <div>
+                <h2 style={{ fontSize:"17px", fontWeight:700, margin:0, color:"#7B8FFF" }}>자세 비대칭 추적기</h2>
+                <p style={{ fontSize:"11px", color:"#555", margin:"4px 0 0" }}>오늘의 자세 습관을 기록해줘</p>
+              </div>
+              <button onClick={() => setShowTracker(false)} style={{ background:"none", border:"none", color:"#555", fontSize:"20px", cursor:"pointer" }}>✕</button>
+            </div>
+            {trackerSaved ? (
+              <div style={{ textAlign:"center", padding:"30px 0" }}>
+                <div style={{ fontSize:"40px", marginBottom:"12px" }}>✅</div>
+                <p style={{ fontSize:"15px", fontWeight:700, color:"#00C896", marginBottom:"8px" }}>기록 완료!</p>
+                <p style={{ fontSize:"12px", color:"#666" }}>꾸준히 기록하면 패턴을 파악할 수 있어요</p>
+                <button onClick={() => { setTrackerSaved(false); setTrackerHabits([]); setTrackerSide(null); setTrackerNote(""); }}
+                  style={{ marginTop:"16px", padding:"10px 20px", background:"#1a1a1a", border:"1px solid #2a2a2a", borderRadius:"10px", color:"#888", fontSize:"13px", cursor:"pointer" }}>
+                  다시 기록하기
+                </button>
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
+                <div>
+                  <p style={{ fontSize:"12px", color:"#7B8FFF", fontWeight:700, marginBottom:"10px" }}>오늘 많이 한 자세 습관</p>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+                    {POSTURE_HABITS.map(h => {
+                      const on = trackerHabits.includes(h.id);
+                      return <button key={h.id} onClick={() => setTrackerHabits(p => on ? p.filter(x=>x!==h.id) : [...p,h.id])}
+                        style={{ padding:"8px 14px", borderRadius:"100px", border:`2px solid ${on?"#7B8FFF":"#2a2a2a"}`, background:on?"#7B8FFF22":"#1a1a1a", color:on?"#7B8FFF":"#666", fontSize:"12px", cursor:"pointer", fontWeight:on?600:400 }}>
+                        {h.label}
+                      </button>;
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <p style={{ fontSize:"12px", color:"#7B8FFF", fontWeight:700, marginBottom:"10px" }}>오늘 통증 느낀 쪽</p>
+                  <div style={{ display:"flex", gap:"8px" }}>
+                    {[["왼쪽","left"],["오른쪽","right"],["양쪽","both"],["없음","none"]].map(([label,val]) => {
+                      const on = trackerSide===val;
+                      return <button key={val} onClick={() => setTrackerSide(val)}
+                        style={{ padding:"8px 14px", borderRadius:"100px", border:`2px solid ${on?"#7B8FFF":"#2a2a2a"}`, background:on?"#7B8FFF22":"#1a1a1a", color:on?"#7B8FFF":"#666", fontSize:"12px", cursor:"pointer" }}>
+                        {label}
+                      </button>;
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <p style={{ fontSize:"12px", color:"#7B8FFF", fontWeight:700, marginBottom:"8px" }}>메모 (선택)</p>
+                  <textarea value={trackerNote} onChange={e=>setTrackerNote(e.target.value)} placeholder="오늘 특이사항..."
+                    style={{ width:"100%", padding:"10px 12px", background:"#0a0a0a", border:"1px solid #2a2a2a", borderRadius:"10px", color:"#e8e8e8", fontSize:"13px", resize:"none", height:"70px", outline:"none", boxSizing:"border-box" }} />
+                </div>
+                <button onClick={async () => {
+                  if (!trackerSide) { alert("통증 쪽을 선택해줘"); return; }
+                  const { error } = await supabase.from("posture_logs").insert({ user_id:user.id, posture_habits:trackerHabits, pain_side:trackerSide, note:trackerNote });
+                  if (error) alert("저장 오류: "+error.message);
+                  else setTrackerSaved(true);
+                }} style={{ padding:"13px", background:"linear-gradient(135deg,#7B8FFF,#5B6FFF)", border:"none", borderRadius:"10px", color:"#fff", fontSize:"14px", fontWeight:700, cursor:"pointer" }}>
+                  오늘 기록 저장
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
